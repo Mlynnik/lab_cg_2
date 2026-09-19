@@ -25,6 +25,16 @@ namespace lab_cg_2
         private Bitmap? originalImage;
         private Bitmap? processedImage;
 
+        private static readonly Color BgDark = Color.FromArgb(28, 30, 38);
+        private static readonly Color BgPanel = Color.FromArgb(38, 41, 52);
+        private static readonly Color BgPanelAlt = Color.FromArgb(46, 50, 63);
+        private static readonly Color Accent = Color.FromArgb(88, 156, 255);
+        private static readonly Color AccentHover = Color.FromArgb(114, 176, 255);
+        private static readonly Color AccentDown = Color.FromArgb(64, 128, 224);
+        private static readonly Color TextPrimary = Color.FromArgb(235, 238, 245);
+        private static readonly Color TextMuted = Color.FromArgb(160, 168, 184);
+        private static readonly Color BorderLine = Color.FromArgb(70, 76, 92);
+
         public Task3()
         {
             InitializeComponent();
@@ -32,98 +42,188 @@ namespace lab_cg_2
             Text = "Преобразование RGB изображения в HSV";
             Size = new Size(1200, 800);
             StartPosition = FormStartPosition.CenterScreen;
+            BackColor = BgDark;
+            ForeColor = TextPrimary;
+            Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+            DoubleBuffered = true;
 
             var mainPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 1
+                RowCount = 1,
+                BackColor = BgDark,
+                Padding = new Padding(14),
+                CellBorderStyle = TableLayoutPanelCellBorderStyle.None
             };
-            mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 80));
-            mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
+            mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 78));
+            mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22));
+
+            var pictureFrame = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(1),
+                BackColor = BorderLine,
+                Margin = new Padding(0, 0, 14, 0)
+            };
 
             pictureBox = new PictureBox
             {
                 Dock = DockStyle.Fill,
-                SizeMode = PictureBoxSizeMode.Zoom
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.FromArgb(18, 20, 26)
             };
-            mainPanel.Controls.Add(pictureBox, 0, 0);
+            pictureFrame.Controls.Add(pictureBox);
+            mainPanel.Controls.Add(pictureFrame, 0, 0);
 
             var controlsPanel = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
-                AutoScroll = true
+                AutoScroll = true,
+                WrapContents = false,
+                BackColor = BgPanel,
+                Padding = new Padding(18, 18, 18, 18)
             };
 
-            buttonLoad = new Button
+            var header = new Label
             {
-                Text = "Загрузить изображение",
-                Width = 200
+                Text = "HSV-коррекция",
+                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+                ForeColor = TextPrimary,
+                Width = 220,
+                Height = 36,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 0, 0, 12)
             };
+            controlsPanel.Controls.Add(header);
+
+            var divider = new Panel
+            {
+                Width = 200,
+                Height = 1,
+                BackColor = BorderLine,
+                Margin = new Padding(0, 0, 0, 16)
+            };
+            controlsPanel.Controls.Add(divider);
+
+            buttonLoad = CreateStyledButton("Загрузить изображение", primary: true);
             buttonLoad.Click += ButtonLoad_Click;
             controlsPanel.Controls.Add(buttonLoad);
 
-            labelHueValue = new Label { Text = "Hue: 0", Width = 200 };
+            controlsPanel.Controls.Add(CreateSpacer(16));
+
+            labelHueValue = CreateStyledLabel("Hue: 0");
             controlsPanel.Controls.Add(labelHueValue);
 
-            sliderHue = new TrackBar
-            {
-                Minimum = 0,
-                Maximum = 359,
-                TickFrequency = 60,
-                Width = 200
-            };
+            sliderHue = CreateStyledTrackBar(0, 359, 60);
             sliderHue.ValueChanged += (s, e) =>
                 labelHueValue.Text = "Hue: " + sliderHue.Value;
             controlsPanel.Controls.Add(sliderHue);
 
-            labelSatValue = new Label { Text = "Saturation: 0", Width = 200 };
+            controlsPanel.Controls.Add(CreateSpacer(6));
+
+            labelSatValue = CreateStyledLabel("Saturation: 0");
             controlsPanel.Controls.Add(labelSatValue);
 
-            sliderSaturation = new TrackBar
-            {
-                Minimum = -100,
-                Maximum = 100,
-                TickFrequency = 20,
-                Width = 200
-            };
+            sliderSaturation = CreateStyledTrackBar(-100, 100, 20);
             sliderSaturation.ValueChanged += (s, e) =>
                 labelSatValue.Text = "Saturation: " + sliderSaturation.Value;
             controlsPanel.Controls.Add(sliderSaturation);
 
-            labelValValue = new Label { Text = "Value: 0", Width = 200 };
+            controlsPanel.Controls.Add(CreateSpacer(6));
+
+            labelValValue = CreateStyledLabel("Value: 0");
             controlsPanel.Controls.Add(labelValValue);
 
-            sliderValue = new TrackBar
-            {
-                Minimum = -100,
-                Maximum = 100,
-                TickFrequency = 20,
-                Width = 200
-            };
+            sliderValue = CreateStyledTrackBar(-100, 100, 20);
             sliderValue.ValueChanged += (s, e) =>
                 labelValValue.Text = "Value: " + sliderValue.Value;
             controlsPanel.Controls.Add(sliderValue);
 
-            buttonProcess = new Button
-            {
-                Text = "Обработать",
-                Width = 200
-            };
+            controlsPanel.Controls.Add(CreateSpacer(20));
+
+            buttonProcess = CreateStyledButton("Обработать", primary: true);
             buttonProcess.Click += ButtonProcess_Click;
             controlsPanel.Controls.Add(buttonProcess);
 
-            buttonSave = new Button
-            {
-                Text = "Сохранить результат",
-                Width = 200
-            };
+            controlsPanel.Controls.Add(CreateSpacer(10));
+
+            buttonSave = CreateStyledButton("Сохранить", primary: false);
             buttonSave.Click += ButtonSave_Click;
             controlsPanel.Controls.Add(buttonSave);
 
             mainPanel.Controls.Add(controlsPanel, 1, 0);
             this.Controls.Add(mainPanel);
+        }
+
+        private Button CreateStyledButton(string text, bool primary)
+        {
+            Color back = primary ? Accent : BgPanelAlt;
+            Color backHover = primary ? AccentHover : Color.FromArgb(58, 63, 78);
+            Color backDown = primary ? AccentDown : Color.FromArgb(50, 54, 68);
+            Color fore = primary ? Color.White : TextPrimary;
+
+            var btn = new Button
+            {
+                Text = text,
+                Width = 220,
+                Height = 42,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = back,
+                ForeColor = fore,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false
+            };
+            btn.FlatAppearance.BorderSize = 0;
+            btn.FlatAppearance.MouseOverBackColor = backHover;
+            btn.FlatAppearance.MouseDownBackColor = backDown;
+            return btn;
+        }
+
+        private Label CreateStyledLabel(string text)
+        {
+            return new Label
+            {
+                Text = text,
+                Width = 220,
+                Height = 24,
+                ForeColor = TextMuted,
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0)
+            };
+        }
+
+        private TrackBar CreateStyledTrackBar(int min, int max, int tickFreq)
+        {
+            var tb = new TrackBar
+            {
+                Minimum = min,
+                Maximum = max,
+                TickFrequency = tickFreq,
+                Width = 220,
+                Height = 45,
+                BackColor = BgPanel,
+                Margin = new Padding(0),
+                SmallChange = 1,
+                LargeChange = 10
+            };
+            return tb;
+        }
+
+        private Panel CreateSpacer(int height)
+        {
+            return new Panel
+            {
+                Width = 220,
+                Height = height,
+                BackColor = Color.Transparent,
+                Margin = new Padding(0)
+            };
         }
 
         private void ButtonLoad_Click(object sender, EventArgs e)
